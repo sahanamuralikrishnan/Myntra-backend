@@ -30,6 +30,18 @@ const mongoose = require("mongoose");
         viewedAt: { type: Date, default: Date.now },
       },
     ],
+  
+      // Which notification categories the user wants to receive
+    notificationPreferences: {
+      order:          { type: Boolean, default: true },
+      payment:        { type: Boolean, default: true },
+      shipping:       { type: Boolean, default: true },
+      delivery:       { type: Boolean, default: true },
+      price_drop:     { type: Boolean, default: true },
+      back_in_stock:  { type: Boolean, default: true },
+      promotion:      { type: Boolean, default: true },
+      abandoned_cart: { type: Boolean, default: true },
+    },
   },
   { timestamps: true },
 );

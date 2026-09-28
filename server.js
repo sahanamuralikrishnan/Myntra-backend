@@ -8,13 +8,18 @@ const productrouter = require("./routes/Productroutes");
 const Bagroutes = require("./routes/Bagroutes");
 const Wishlistroutes = require("./routes/Wishlistroutes");
 const RecentlyViewedroutes = require("./routes/RecentlyViewedroutes");
-
+const Orderroutes = require("./routes/OrderRoutes");
+const PushTokenRoutes = require("./routes/PushTokenRoutes");
+const NotificationRoutes = require("./routes/NotificationRoutes");
+const WebhookRoutes = require("./routes/WebhookRoutes");
+const { startScheduler } = require("./services/scheduler");
 
 
 dotenv.config();
-
 const app = express();
-app.use(express.json());
+// Keep the raw request body around (on req.rawBody) so webhook signatures
+// can be verified against the exact bytes the sender signed
+app.use(express.json({ verify: (req, res, buf) => { req.rawBody = buf; } }));
 // app.use("/user", require("./routes/userroutes"));
 // ✅ enable CORS
 app.use(cors({
@@ -31,7 +36,10 @@ app.use("/product", productrouter);
 app.use("/bag", Bagroutes);
 app.use("/wishlist", Wishlistroutes);
 app.use("/recently-viewed", RecentlyViewedroutes);
-
+app.use("/order", Orderroutes);
+app.use("/push-token", PushTokenRoutes);
+app.use("/notifications", NotificationRoutes);
+app.use("/webhooks", WebhookRoutes);
 
 
 
@@ -39,6 +47,8 @@ mongoose
   .connect(process.env.MONGO_URI)
   .then(() => {
     console.log("MongoDB connected");
+    // Start scheduled jobs (abandoned cart reminders, delivery receipts)
+    startScheduler();
   })
   .catch((err) => console.log(err));
 

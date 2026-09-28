@@ -1,10 +1,13 @@
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const User = require("../models/User");
+const { createToken } = require("../middleware/auth");
 const router = express.Router();
 
 router.post("/signup", async (req, res) => {
-  const { fullname, email, password } = req.body;
+  const { fullname, password } = req.body;
+  // Ignore spaces and capital letters (phone keyboards often add them)
+  const email = String(req.body.email || "").trim().toLowerCase();
 
   try {
     const existingUser = await User.findOne({ email });
@@ -17,7 +20,7 @@ router.post("/signup", async (req, res) => {
     const user = new User({ fullname, email, password: hashedPassword });
     await user.save();
     const { password: _, ...userData } = user.toObject();
-    res.status(200).json({ user: userData });
+    res.status(200).json({ user: userData, token: createToken(user._id) });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Something went wrong" });
@@ -25,12 +28,14 @@ router.post("/signup", async (req, res) => {
 });
 
 router.post("/login", async (req, res) => {
-  console.log("Incoming body:", req.body);
-  const { email, password } = req.body;
+  const { password } = req.body;
+  // Ignore spaces and capital letters (phone keyboards often add them)
+  const email = String(req.body.email || "").trim().toLowerCase();
 
   try {
     const user = await User.findOne({ email });
     if (!user) {
+      console.log(`Login failed: no account for ${JSON.stringify(email)}`);
       return res.status(404).json({ message: "User not found" });
     }
 
@@ -39,7 +44,7 @@ router.post("/login", async (req, res) => {
       return res.status(400).json({ message: "Invalid password" });
     }
     const { password: _, ...userData } = user.toObject();
-    res.status(200).json({ user: userData });
+    res.status(200).json({ user: userData, token: createToken(user._id) });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Something went wrong" });
@@ -63,8 +68,5 @@ router.put("/:id/theme", async (req, res) => {
     res.status(500).json({ message: "Something went wrong" });
   }
 });
-
-module.exports = router;
-
 
 module.exports = router;
