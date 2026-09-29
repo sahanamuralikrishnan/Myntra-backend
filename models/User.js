@@ -30,7 +30,6 @@ const mongoose = require("mongoose");
         viewedAt: { type: Date, default: Date.now },
       },
     ],
-  
       // Which notification categories the user wants to receive
     notificationPreferences: {
       order:          { type: Boolean, default: true },
