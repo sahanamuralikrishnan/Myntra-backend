@@ -1,6 +1,8 @@
+const dotenv = require("dotenv");
+dotenv.config();
+
 const express = require("express");
 const mongoose = require("mongoose");
-const dotenv = require("dotenv");
 const userouter = require("./routes/userroutes");
 const cors = require("cors");
 const categoryrouter = require("./routes/Categoryroutes");
@@ -15,10 +17,10 @@ const PushTokenRoutes = require("./routes/PushTokenRoutes");
 const NotificationRoutes = require("./routes/NotificationRoutes");
 const WebhookRoutes = require("./routes/WebhookRoutes");
 const RecommendationRoutes = require("./routes/RecommendationRoutes");
+const PaymentRoutes = require("./routes/PaymentRoutes");
 const { startScheduler } = require("./services/scheduler");
 
 
-dotenv.config();
 const app = express();
 // Keep the raw request body around (on req.rawBody) so webhook signatures
 // can be verified against the exact bytes the sender signed
@@ -46,6 +48,7 @@ app.use("/push-token", PushTokenRoutes);
 app.use("/notifications", NotificationRoutes);
 app.use("/webhooks", WebhookRoutes);
 app.use("/recommendations", RecommendationRoutes);
+app.use("/payment", PaymentRoutes);
 
 
 

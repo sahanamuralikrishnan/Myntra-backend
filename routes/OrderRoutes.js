@@ -80,6 +80,8 @@ router.post("/create/:userId", async (req, res) => {
       total,
       shippingAddress: req.body.shippingAddress,
       paymentMethod: req.body.paymentMethod,
+      paymentStatus: req.body.paymentStatus || "pending",
+      razorpayPaymentId: req.body.razorpayPaymentId,
       tracking: generateRandomTracking(),
     });
 
