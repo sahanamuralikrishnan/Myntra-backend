@@ -10,5 +10,6 @@ const recentlyViewedSchema = new mongoose.Schema(
 );
 
 recentlyViewedSchema.index({ userId: 1, productId: 1 }, { unique: true });
+recentlyViewedSchema.index({ userId: 1, viewedAt: -1 });
 
 module.exports = mongoose.model("RecentlyViewed", recentlyViewedSchema);

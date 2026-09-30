@@ -7,9 +7,14 @@ const productSchema = new mongoose.Schema({
   price: { type: Number, required: true },
   discount: { type: String },
   sizes: [{ type: String }],
-  images: [{ type: String }],// ✅ always plural, array of strings
-  stock : { type: Number, default: 10 }
+  images: [{ type: String }],
+  stock : { type: Number, default: 10 },
+  purchaseCount: { type: Number, default: 0 },
+
 });
+
+productSchema.index({ stock: 1, purchaseCount: -1 });
+productSchema.index({ subcategory: 1, stock: 1 });
 
 module.exports = mongoose.model("Product", productSchema);
 

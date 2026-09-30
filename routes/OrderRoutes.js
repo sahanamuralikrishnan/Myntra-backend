@@ -2,6 +2,7 @@ const express = require("express");
 const PDFDocument = require("pdfkit");
 const Bag = require("../models/Bag");
 const Order = require("../models/Order");
+const Product = require("../models/product");
 const { sendToUser } = require("../services/notificationService");
 const {
   requireAdmin,
@@ -53,7 +54,9 @@ router.post("/create/:userId", async (req, res) => {
   try {
     const userId = req.params.userId;
     const bag = await Bag.find({ userId }).populate("productId");
-    const validItems = bag.filter((item) => item.productId);
+    const validItems = bag.filter(
+      (item) => item.productId && !item.savedForLater
+    );
     if (validItems.length === 0) {
       return res.status(400).json({ message: "No item in the bag" });
     }
@@ -81,7 +84,17 @@ router.post("/create/:userId", async (req, res) => {
     });
 
     await newOrder.save();
-    await Bag.deleteMany({ userId: userId });
+
+    await Product.bulkWrite(
+      orderItems.map((item) => ({
+        updateOne: {
+          filter: { _id: item.productId },
+          update: { $inc: { purchaseCount: item.quantity } },
+        },
+      }))
+    );
+
+    await Bag.deleteMany({ userId, savedForLater: { $ne: true } });
 
     // 🔔 Order confirmation
     sendToUser(

@@ -77,4 +77,6 @@ const OrderSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
+OrderSchema.index({ userId: 1, date: -1 });
+
 module.exports = mongoose.model("Order", OrderSchema);

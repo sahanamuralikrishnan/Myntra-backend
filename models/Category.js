@@ -3,8 +3,8 @@ const mongoose = require("mongoose");
 const CategorySchema = new mongoose.Schema(
   {
    name: String,
-   subCategory: [String],
-   images: String,
+   subcategories: [String],
+   image: String,
     productid: [{ type: mongoose.Schema.Types.ObjectId, ref: "Product" }],
     
   },

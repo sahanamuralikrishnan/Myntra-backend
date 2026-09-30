@@ -14,6 +14,7 @@ const PaymentMethodRoutes = require("./routes/PaymentMethodRoutes");
 const PushTokenRoutes = require("./routes/PushTokenRoutes");
 const NotificationRoutes = require("./routes/NotificationRoutes");
 const WebhookRoutes = require("./routes/WebhookRoutes");
+const RecommendationRoutes = require("./routes/RecommendationRoutes");
 const { startScheduler } = require("./services/scheduler");
 
 
@@ -44,6 +45,7 @@ app.use("/payment-methods", PaymentMethodRoutes);
 app.use("/push-token", PushTokenRoutes);
 app.use("/notifications", NotificationRoutes);
 app.use("/webhooks", WebhookRoutes);
+app.use("/recommendations", RecommendationRoutes);
 
 
 

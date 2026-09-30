@@ -37,7 +37,6 @@ router.get("/:userId", async (req, res) => {
     res.status(500).json({ message: "Something went wrong" });
   }
 });
-
 // Update an address
 router.put("/:addressId", async (req, res) => {
   try {
@@ -54,7 +53,6 @@ router.put("/:addressId", async (req, res) => {
     res.status(500).json({ message: "Something went wrong" });
   }
 });
-
 // Delete an address
 router.delete("/:addressId", async (req, res) => {
   try {
@@ -65,22 +63,18 @@ router.delete("/:addressId", async (req, res) => {
     res.status(500).json({ message: "Error removing address" });
   }
 });
-
 // Set one address as the default (unsets every other one for that user)
 router.post("/:addressId/set-default", async (req, res) => {
   try {
     const address = await Address.findById(req.params.addressId);
     if (!address) return res.status(404).json({ message: "Address not found" });
-
     await Address.updateMany({ userId: address.userId }, { isDefault: false });
     address.isDefault = true;
     await address.save();
-
     res.status(200).json(address);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Something went wrong" });
   }
 });
-
 module.exports = router;

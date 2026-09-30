@@ -2,7 +2,7 @@ const express = require("express");
 const RecentlyViewed = require("../models/RecentlyViewed");
 const router = express.Router();
 
-const MAX_RECENTLY_VIEWED = 20;
+const MAX_RECENTLY_VIEWED = 50;
 
 // ✅ Record a product view (creates it, or bumps an existing one to the top)
 router.post("/", async (req, res) => {
@@ -11,17 +11,23 @@ router.post("/", async (req, res) => {
     if (!userId || !productId) {
       return res.status(400).json({ message: "userId and productId are required" });
     }
-
     const entry = await RecentlyViewed.findOneAndUpdate(
       { userId, productId },
       { viewedAt: new Date() },
       { upsert: true, new: true }
     );
 
-    const allForUser = await RecentlyViewed.find({ userId }).sort({ viewedAt: -1 });
-    if (allForUser.length > MAX_RECENTLY_VIEWED) {
-      const idsToRemove = allForUser.slice(MAX_RECENTLY_VIEWED).map((item) => item._id);
-      await RecentlyViewed.deleteMany({ _id: { $in: idsToRemove } });
+    const cutoff = await RecentlyViewed.find({ userId })
+      .sort({ viewedAt: -1 })
+      .skip(MAX_RECENTLY_VIEWED)
+      .limit(1)
+      .select("viewedAt");
+
+    if (cutoff.length > 0) {
+      await RecentlyViewed.deleteMany({
+        userId,
+        viewedAt: { $lt: cutoff[0].viewedAt },
+      });
     }
 
     await entry.populate("productId");
