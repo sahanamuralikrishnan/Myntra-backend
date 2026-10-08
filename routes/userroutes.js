@@ -57,7 +57,7 @@ router.put("/:id/theme", async (req, res) => {
     const user = await User.findByIdAndUpdate(
       req.params.id,
       { theme },
-      { new: true }
+      { returnDocument: "after" }
     );
     if (!user) {
       return res.status(404).json({ message: "User not found" });

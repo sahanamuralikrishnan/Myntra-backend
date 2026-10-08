@@ -1,4 +1,5 @@
 const express = require("express");
+const mongoose = require("mongoose");
 const Product = require("../models/product");
 const Wishlist = require("../models/Wishlist");
 const { sendToUser } = require("../services/notificationService");
@@ -16,8 +17,12 @@ router.get("/", async (req, res) => {
 });
   router.get("/:id", async (req, res) => {
   const productId = req.params.id;
+  if (!mongoose.isValidObjectId(productId)) {
+    return res.status(404).json({ message: "Product not found" });
+  }
   try {
     const product = await Product.findById(productId); // fetch product from DB
+    if (!product) return res.status(404).json({ message: "Product not found" });
     res.status(200).json(product); // return product as JSON
   } catch (error) {
     console.error(error);

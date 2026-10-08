@@ -44,7 +44,7 @@ router.put("/:addressId", async (req, res) => {
     const address = await Address.findByIdAndUpdate(
       req.params.addressId,
       { label, fullName, phone, street, city, state, postalCode, country },
-      { new: true },
+      { returnDocument: "after" },
     );
     if (!address) return res.status(404).json({ message: "Address not found" });
     res.status(200).json(address);

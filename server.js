@@ -27,9 +27,14 @@ const app = express();
 app.use(express.json({ verify: (req, res, buf) => { req.rawBody = buf; } }));
 // app.use("/user", require("./routes/userroutes"));
 // ✅ enable CORS
+// Websites allowed to call this backend, comma-separated in .env (CORS_ORIGINS)
+const allowedOrigins = (process.env.CORS_ORIGINS || "http://localhost:8081")
+  .split(",")
+  .map((o) => o.trim());
+
 app.use(cors({
-  origin: "http://localhost:8081", // allow Expo web dev server
-  credentials: true                // allow cookies/tokens if needed
+  origin: allowedOrigins, // allowed websites (Expo web dev server by default)
+  credentials: true       // allow cookies/tokens if needed
 }));
 
 app.get("/", (req, res) => {

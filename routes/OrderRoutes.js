@@ -1,4 +1,5 @@
 const express = require("express");
+const crypto = require("crypto");
 const PDFDocument = require("pdfkit");
 const Bag = require("../models/Bag");
 const Order = require("../models/Order");
@@ -49,8 +50,20 @@ async function generateInvoiceNumber() {
   return `INV-${year}-${nextNumber}`;
 }
 
+// Check Razorpay's signature ourselves, so the app can't just claim "paid"
+function isValidRazorpayPayment(orderId, paymentId, signature) {
+  if (!orderId || !paymentId || !signature) return false;
+  const expected = crypto
+    .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+    .update(`${orderId}|${paymentId}`)
+    .digest("hex");
+  const sent = Buffer.from(String(signature));
+  const expectedBuf = Buffer.from(expected);
+  return sent.length === expectedBuf.length && crypto.timingSafeEqual(sent, expectedBuf);
+}
+
 // Create an order from everything in the user's bag
-router.post("/create/:userId", async (req, res) => {
+router.post("/create/:userId", requireAuth, requireSelf, async (req, res) => {
   try {
     const userId = req.params.userId;
     const bag = await Bag.find({ userId }).populate("productId");
@@ -59,6 +72,23 @@ router.post("/create/:userId", async (req, res) => {
     );
     if (validItems.length === 0) {
       return res.status(400).json({ message: "No item in the bag" });
+    }
+
+    const outOfStock = validItems.filter(
+      (item) => item.productId.stock < (item.quantity || 1)
+    );
+    if (outOfStock.length > 0) {
+      return res.status(400).json({
+        message: "Some items are out of stock",
+        items: outOfStock.map((item) => item.productId.name),
+      });
+    }
+
+    // Only mark the order as paid if Razorpay's signature checks out
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+    const paid = isValidRazorpayPayment(razorpay_order_id, razorpay_payment_id, razorpay_signature);
+    if (razorpay_payment_id && !paid) {
+      return res.status(400).json({ message: "Payment could not be verified" });
     }
 
     const orderItems = validItems.map((item) => ({
@@ -80,8 +110,8 @@ router.post("/create/:userId", async (req, res) => {
       total,
       shippingAddress: req.body.shippingAddress,
       paymentMethod: req.body.paymentMethod,
-      paymentStatus: req.body.paymentStatus || "pending",
-      razorpayPaymentId: req.body.razorpayPaymentId,
+      paymentStatus: paid ? "paid" : "pending",
+      razorpayPaymentId: paid ? razorpay_payment_id : undefined,
       tracking: generateRandomTracking(),
     });
 
@@ -91,7 +121,7 @@ router.post("/create/:userId", async (req, res) => {
       orderItems.map((item) => ({
         updateOne: {
           filter: { _id: item.productId },
-          update: { $inc: { purchaseCount: item.quantity } },
+          update: { $inc: { purchaseCount: item.quantity, stock: -item.quantity } },
         },
       }))
     );
@@ -108,12 +138,11 @@ router.post("/create/:userId", async (req, res) => {
     ).catch(console.error);
 
     // 🔔 Payment update
-    const isCOD = (newOrder.paymentMethod || "").toLowerCase().includes("cod");
     sendToUser(
       userId,
       "payment",
-      isCOD ? "Pay on delivery 💵" : "Payment received ✅",
-      isCOD
+      !paid ? "Pay on delivery 💵" : "Payment received ✅",
+      !paid
         ? `Please keep ₹${total} ready when your order arrives.`
         : `We received your payment of ₹${total}.`,
       { orderId: String(newOrder._id), screen: "orders" },

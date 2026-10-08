@@ -29,7 +29,7 @@ router.post("/", async (req, res) => {
           priceAtAdd: product.price,
         },
       },
-      { upsert: true, new: true, setDefaultsOnInsert: true },
+      { upsert: true, returnDocument: "after", setDefaultsOnInsert: true },
     ).populate("productId");
     res.status(200).json(bagItem);
   } catch (error) {
@@ -121,7 +121,7 @@ router.put("/:itemid", async (req, res) => {
     const item = await Bag.findByIdAndUpdate(
       req.params.itemid,
       { quantity },
-      { new: true },
+      { returnDocument: "after" },
     ).populate("productId");
 
     if (!item) {
@@ -139,7 +139,7 @@ router.post("/:itemid/save-for-later", async (req, res) => {
     const item = await Bag.findByIdAndUpdate(
       req.params.itemid,
       { savedForLater: true },
-      { new: true },
+      { returnDocument: "after" },
     ).populate("productId");
 
     if (!item) {
@@ -157,7 +157,7 @@ router.post("/:itemid/move-to-bag", async (req, res) => {
     const item = await Bag.findByIdAndUpdate(
       req.params.itemid,
       { savedForLater: false },
-      { new: true },
+      { returnDocument: "after" },
     ).populate("productId");
 
     if (!item) {

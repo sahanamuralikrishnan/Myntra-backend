@@ -14,7 +14,7 @@ router.post("/", async (req, res) => {
     const entry = await RecentlyViewed.findOneAndUpdate(
       { userId, productId },
       { viewedAt: new Date() },
-      { upsert: true, new: true }
+      { upsert: true, returnDocument: "after" }
     );
 
     const cutoff = await RecentlyViewed.find({ userId })
